@@ -10,11 +10,19 @@
 #define TOY_DIALECT
 
 include "mlir/IR/OpBase.td"
+include "mlir/IR/FunctionInterfaces.td"
+include "mlir/IR/SymbolInterfaces.td"
+include "mlir/Interfaces/CallInterfaces.td"
+include "mlir/Interfaces/CastInterfaces.td"
+include "mlir/Interfaces/SideEffectInterfaces.td"
+include "Toy/ShapeInferenceInterface.td"
 
 //===----------------------------------------------------------------------===//
 // Toy dialect definition.
 //===----------------------------------------------------------------------===//
 
+// Provide a definition of the 'toy' dialect in the ODS framework so that we
+// can define our operations.
 def Toy_Dialect : Dialect {
     let name = "toy";
     let summary = "A toy out-of-tree MLIR dialect.";
@@ -35,6 +43,11 @@ def Toy_Dialect : Dialect {
 // Base toy operation definition.
 //===----------------------------------------------------------------------===//
 
+// Base class for toy dialect operations. This operation inherits from the base
+// `Op` class in OpBase.td, and provides:
+//   * The parent dialect of the operation.
+//   * The mnemonic for the operation, or the name without the dialect prefix.
+//   * A list of traits for the operation.
 class Toy_Op<string mnemonic, list<Trait> traits = []> :
         Op<Toy_Dialect, mnemonic, traits>;
 

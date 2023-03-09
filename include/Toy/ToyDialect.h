@@ -9,8 +9,17 @@
 #ifndef TOY_TOYDIALECT_H
 #define TOY_TOYDIALECT_H
 
+#include "Toy/ShapeInferenceInterface.h"
+#include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/Dialect.h"
+#include "mlir/IR/FunctionInterfaces.h"
+#include "mlir/IR/SymbolTable.h"
+#include "mlir/Interfaces/CallInterfaces.h"
+#include "mlir/Interfaces/CastInterfaces.h"
+#include "mlir/Interfaces/SideEffectInterfaces.h"
 
+/// Include the auto-generated header file containing the declaration of the toy
+/// dialect.
 #include "Toy/ToyOpsDialect.h.inc"
 
 #endif // TOY_TOYDIALECT_H
