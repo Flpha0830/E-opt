@@ -14,6 +14,8 @@
 #include "Toy/Passes.h"
 #include "Toy/ShapeInferenceInterface.h"
 #include "Toy/ToyDialect.h"
+#include "Toy/ToyOps.h"
+#include "Toy/ToyTypes.h"
 #include "mlir/Pass/Pass.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Debug.h"

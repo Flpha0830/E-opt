@@ -24,6 +24,8 @@
 
 #include "Toy/Passes.h"
 #include "Toy/ToyDialect.h"
+#include "Toy/ToyOps.h"
+#include "Toy/ToyTypes.h"
 
 #include "mlir/Conversion/AffineToStandard/AffineToStandard.h"
 #include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"

@@ -1,7 +1,7 @@
 # This chapter depends on JIT support enabled.
-if(NOT MLIR_ENABLE_EXECUTION_ENGINE)
-    return()
-endif()
+#if(NOT MLIR_ENABLE_EXECUTION_ENGINE)
+#    return()
+#endif()
 
 set(LLVM_LINK_COMPONENTS
   Core

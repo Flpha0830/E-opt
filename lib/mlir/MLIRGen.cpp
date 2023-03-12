@@ -14,6 +14,8 @@
 #include "Toy/MLIRGen.h"
 #include "Toy/AST.h"
 #include "Toy/ToyDialect.h"
+#include "Toy/ToyOps.h"
+#include "Toy/ToyTypes.h"
 
 #include "mlir/IR/Attributes.h"
 #include "mlir/IR/Builders.h"

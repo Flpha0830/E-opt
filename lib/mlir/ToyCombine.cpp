@@ -13,6 +13,7 @@
 
 #include "Toy/ToyDialect.h"
 #include "Toy/ToyOps.h"
+#include "Toy/ToyTypes.h"
 #include "mlir/IR/Matchers.h"
 #include "mlir/IR/PatternMatch.h"
 #include <numeric>

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "toy/AST.h"
+#include "Toy/AST.h"
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/TypeSwitch.h"

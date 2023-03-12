@@ -14,6 +14,8 @@
 
 #include "Toy/Passes.h"
 #include "Toy/ToyDialect.h"
+#include "Toy/ToyOps.h"
+#include "Toy/ToyTypes.h"
 #include "mlir/IR/BuiltinDialect.h"
 
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
