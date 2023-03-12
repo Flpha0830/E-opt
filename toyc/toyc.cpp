@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Toy/MLIRGen.h"
-#include "Toy/Parser.h"
-#include "Toy/Passes.h"
-#include "Toy/ToyDialect.h"
-#include "Toy/ToyOps.h"
-#include "Toy/ToyTypes.h"
+#include "CodeGen/MLIRGen.h"
+#include "Conversion/Passes.h"
+#include "Dialect/Toy/IR/ToyDialect.h"
+#include "Dialect/Toy/IR/ToyOps.h"
+#include "Dialect/Toy/IR/ToyTypes.h"
+#include "Dialect/Toy/Transforms/Passes.h"
+#include "Frontend/Parser.h"
 
 #include "mlir/Dialect/Affine/Passes.h"
 #include "mlir/Dialect/LLVMIR/Transforms/Passes.h"

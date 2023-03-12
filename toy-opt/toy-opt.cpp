@@ -20,7 +20,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/ToolOutputFile.h"
 
-#include "Toy/ToyDialect.h"
+#include "Dialect/Toy/IR/ToyDialect.h"
 
 int main(int argc, char **argv) {
   mlir::registerAllPasses();

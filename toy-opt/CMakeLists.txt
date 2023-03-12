@@ -8,13 +8,9 @@ set(LIBS
         MLIRToy
         )
 
-set(LLVM_TARGET_DEFINITIONS ../lib/mlir/ToyCombine.td)
-mlir_tablegen(ToyCombine.inc -gen-rewriters)
-add_public_tablegen_target(MLIRToyCombineIncGen)
-
 add_llvm_executable(toy-opt
         toy-opt.cpp
-        ../lib/mlir/ToyCombine.cpp
+        ../lib/Dialect/Toy/Transforms/ToyCombine.cpp
         )
 
 llvm_update_compile_flags(toy-opt)

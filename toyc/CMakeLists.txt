@@ -10,19 +10,15 @@ set(LLVM_LINK_COMPONENTS
   OrcJIT
   )
 
-set(LLVM_TARGET_DEFINITIONS ../lib/mlir/ToyCombine.td)
-mlir_tablegen(ToyCombine.inc -gen-rewriters)
-add_public_tablegen_target(MLIRToyCombineIncGen)
-
 add_llvm_executable(toyc
   toyc.cpp
-  ../parser/AST.cpp
-  ../lib/mlir/MLIRGen.cpp
-  ../lib/Toy/ToyDialect.cpp
-  ../lib/mlir/LowerToAffineLoops.cpp
-  ../lib/mlir/LowerToLLVM.cpp
-  ../lib/mlir/ShapeInferencePass.cpp
-  ../lib/mlir/ToyCombine.cpp
+  ../lib/Frontend/AST.cpp
+  ../lib/CodeGen/MLIRGen.cpp
+  ../lib/Dialect/Toy/IR/ToyDialect.cpp
+  ../lib/Conversion/LowerToAffineLoops.cpp
+  ../lib/Conversion/LowerToLLVM.cpp
+  ../lib/Dialect/Toy/Transforms/ShapeInferencePass.cpp
+  ../lib/Dialect/Toy/Transforms/ToyCombine.cpp
 
   DEPENDS
   MLIRShapeInferenceInterfaceIncGen
