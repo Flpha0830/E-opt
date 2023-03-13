@@ -9,6 +9,7 @@ set(TOY_TEST_DEPENDS
         FileCheck count not
         toy-opt
         toy-translate
+        toyc
         )
 if(MLIR_ENABLE_BINDINGS_PYTHON)
   list(APPEND TOY_TEST_DEPENDS ToyPythonModules)
