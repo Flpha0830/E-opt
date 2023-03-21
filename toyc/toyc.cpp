@@ -152,7 +152,8 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
     // the operations.
     mlir::OpPassManager &optPM = pm.nest<mlir::toy::FuncOp>();
     optPM.addPass(mlir::toy::createShapeInferencePass());
-    optPM.addPass(mlir::createCanonicalizerPass());
+    //    optPM.addPass(mlir::createCanonicalizerPass());
+    optPM.addPass(mlir::createEGraphCanonicalizerPass());
     optPM.addPass(mlir::createCSEPass());
   }
 

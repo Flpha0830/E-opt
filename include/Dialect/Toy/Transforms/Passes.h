@@ -18,6 +18,8 @@
 namespace mlir {
 class Pass;
 
+std::unique_ptr<Pass> createEGraphCanonicalizerPass();
+
 namespace toy {
 std::unique_ptr<Pass> createShapeInferencePass();
 } // namespace toy

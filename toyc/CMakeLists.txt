@@ -19,6 +19,8 @@ add_llvm_executable(toyc
   ../lib/Conversion/LowerToLLVM.cpp
   ../lib/Dialect/Toy/Transforms/ShapeInferencePass.cpp
   ../lib/Dialect/Toy/Transforms/ToyCombine.cpp
+  ../lib/Dialect/Toy/Transforms/EGraphCanonicalizer.cpp
+  ../lib/Dialect/Toy/Transforms/EGraphPatternApplicator.cpp
 
   DEPENDS
   MLIRShapeInferenceInterfaceIncGen
