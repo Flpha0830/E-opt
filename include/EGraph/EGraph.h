@@ -18,13 +18,11 @@
 
 namespace mlir {
 struct ENode {
-  StringRef type;
   std::vector<int64_t> children;
   Operation *op;
   std::vector<ENode *> operand;
 
-  ENode(StringRef type) : type(type) {}
-  ENode(StringRef type, Operation *op) : type(type), op(op) {}
+  ENode(Operation *op) : op(op) {}
 
   bool operator<(const ENode &rhs) const { return this->op < rhs.op; }
 };

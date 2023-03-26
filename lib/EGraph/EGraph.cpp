@@ -31,7 +31,7 @@ void EGraph::buildWithOp(Operation *op) {
       } else {
         //                llvm::outs() << curr->getName() << "\n";
 
-        op2ENode.emplace(curr, curr->getName().getStringRef());
+        op2ENode.emplace(curr, curr);
         ENode *eNode = &op2ENode.at(curr);
         eNode->op = curr;
 
@@ -262,7 +262,7 @@ void EGraph::dump() {
     seen.insert(eNode);
 
     int64_t eClassId = eNode2EClass[eNode];
-    llvm::outs() << "ENode Name: " << eNode->type << "\n"
+    llvm::outs() << "ENode Name: " << eNode->op->getName() << "\n"
                  << "ENode EClass: " << eClassId << "\n"
                  << "ENode Children: ";
     for (size_t i = 0; i < eNode->children.size(); i++) {
@@ -300,7 +300,8 @@ void EGraph::rebuild() {
       int64_t newEClassId = find(eClassId);
       std::vector<ENode *> *eClass = &eClassMap[newEClassId];
       auto cmp = [](const ENode *a, const ENode *b) {
-        if (a->type == b->type && a->children.size() == b->children.size()) {
+        if (a->op->getName() == b->op->getName() &&
+            a->children.size() == b->children.size()) {
           return a == b;
         }
         return a->op < b->op;
@@ -399,7 +400,7 @@ int64_t EGraph::addSubst(Operation *op) {
         if (!op2ENode.count(curr)) {
           localEraseOpList.push_back(curr);
 
-          op2ENode.emplace(curr, curr->getName().getStringRef());
+          op2ENode.emplace(curr, curr);
           ENode *eNode = &op2ENode.at(curr);
           eNode->op = curr;
 
