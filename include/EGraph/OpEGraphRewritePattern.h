@@ -12,18 +12,7 @@
 #include "mlir/IR/PatternMatch.h"
 
 namespace mlir {
-
-struct ENode {
-  StringRef type;
-  std::vector<int64_t> children;
-  Operation *op;
-  std::vector<ENode *> operand;
-
-  ENode(StringRef type) : type(type) {}
-  ENode(StringRef type, Operation *op) : type(type), op(op) {}
-
-  bool operator<(const ENode &rhs) const { return this->op < rhs.op; }
-};
+class EGraph;
 
 template <typename SourceOp>
 struct OpEGraphRewritePattern : public OpRewritePattern<SourceOp> {
@@ -45,11 +34,9 @@ struct OpEGraphRewritePattern : public OpRewritePattern<SourceOp> {
     return false;
   }
 
-  virtual Operation *matchAndReturnSubst(
-      Operation *op, PatternRewriter &rewriter,
-      std::map<Operation *, ENode> &op2ENode,
-      std::map<ENode *, int64_t> &eNode2EClass,
-      std::map<int64_t, std::vector<ENode *>> &eClassMap) const {
+  virtual Operation *matchAndReturnSubst(Operation *op,
+                                         PatternRewriter &rewriter,
+                                         EGraph &eGraph) const {
     llvm_unreachable("must override rewrite or matchAndRewrite");
   }
 };

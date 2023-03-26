@@ -9,9 +9,9 @@
 #include "Dialect/Toy/IR/ToyDialect.h"
 #include "Dialect/Toy/IR/ToyOps.h"
 #include "Dialect/Toy/IR/ToyTypes.h"
-#include "Dialect/Toy/Transforms/EGraphPatternApplicator.h"
-#include "Dialect/Toy/Transforms/OpEGraphRewritePattern.h"
 #include "Dialect/Toy/Transforms/Passes.h"
+#include "EGraph/EGraphPatternApplicator.h"
+#include "EGraph/OpEGraphRewritePattern.h"
 
 #include "mlir/IR/Matchers.h"
 #include "mlir/Pass/Pass.h"

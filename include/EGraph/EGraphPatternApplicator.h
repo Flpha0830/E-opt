@@ -9,7 +9,7 @@
 #ifndef EGRAPHPATTERNAPPLICATOR_H
 #define EGRAPHPATTERNAPPLICATOR_H
 
-#include "Dialect/Toy/Transforms/OpEGraphRewritePattern.h"
+#include "EGraph/OpEGraphRewritePattern.h"
 
 #include "mlir/Rewrite/FrozenRewritePatternSet.h"
 

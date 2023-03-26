@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Dialect/Toy/Transforms/EGraphPatternApplicator.h"
-#include "Dialect/Toy/Transforms/OpEGraphRewritePattern.h"
-#include "Dialect/Toy/Transforms/Utils/EGraph.h"
+#include "EGraph/EGraphPatternApplicator.h"
+#include "EGraph/EGraph.h"
+#include "EGraph/OpEGraphRewritePattern.h"
 
 #include "llvm/Support/Debug.h"
 

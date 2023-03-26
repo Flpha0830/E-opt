@@ -15,7 +15,8 @@
 #include "Dialect/Toy/IR/ToyOps.h"
 #include "Dialect/Toy/IR/ToyTypes.h"
 
-#include "Dialect/Toy/Transforms/OpEGraphRewritePattern.h"
+#include "EGraph/EGraph.h"
+#include "EGraph/OpEGraphRewritePattern.h"
 
 #include "mlir/IR/Matchers.h"
 #include "mlir/IR/PatternMatch.h"
@@ -37,26 +38,15 @@ struct SimplifyRedundantTranspose
   /// them in order of profitability.
   SimplifyRedundantTranspose(mlir::MLIRContext *context)
       : OpEGraphRewritePattern<TransposeOp>(context, /*benefit=*/1) {}
-  Operation *matchAndReturnSubst(
-      Operation *op, PatternRewriter &rewriter,
-      std::map<Operation *, ENode> &op2ENode,
-      std::map<ENode *, int64_t> &eNode2EClass,
-      std::map<int64_t, std::vector<ENode *>> &eClassMap) const override {
+  Operation *matchAndReturnSubst(Operation *op, PatternRewriter &rewriter,
+                                 EGraph &eGraph) const override {
     mlir::Value transposeInput = op->getOperand(0);
     Operation *inputOp = transposeInput.getDefiningOp();
 
-    auto eNode = &op2ENode.at(inputOp);
-    if (!eNode2EClass.count(eNode)) {
-      return nullptr;
-    }
-    int64_t eClassId = eNode2EClass[eNode];
-
-    std::vector<ENode *> eNodesInEClass = eClassMap[eClassId];
-    for (auto it = eNodesInEClass.begin(); it != eNodesInEClass.end(); it++) {
-      if (TransposeOp transposeInputOp = dyn_cast<TransposeOp>((*it)->op)) {
-        mlir::Value ret = transposeInputOp.getOperand();
-        return ret.getDefiningOp();
-      }
+    if (TransposeOp transposeInputOp =
+            eGraph.getOpInEClass<TransposeOp>(inputOp)) {
+      mlir::Value ret = transposeInputOp.getOperand();
+      return ret.getDefiningOp();
     }
     return nullptr;
   }
@@ -65,36 +55,22 @@ struct SimplifyRedundantTranspose
 struct TransposeAddition : public mlir::OpEGraphRewritePattern<TransposeOp> {
   TransposeAddition(mlir::MLIRContext *context)
       : OpEGraphRewritePattern<TransposeOp>(context, /*benefit=*/1) {}
-  Operation *matchAndReturnSubst(
-      Operation *op, PatternRewriter &rewriter,
-      std::map<Operation *, ENode> &op2ENode,
-      std::map<ENode *, int64_t> &eNode2EClass,
-      std::map<int64_t, std::vector<ENode *>> &eClassMap) const override {
+  Operation *matchAndReturnSubst(Operation *op, PatternRewriter &rewriter,
+                                 EGraph &eGraph) const override {
     mlir::Value transposeInput = op->getOperand(0);
     Operation *inputOp = transposeInput.getDefiningOp();
 
-    auto eNode = &op2ENode.at(inputOp);
-    if (!eNode2EClass.count(eNode)) {
-      return nullptr;
-    }
-    int64_t eClassId = eNode2EClass[eNode];
-    std::vector<ENode *> eNodesInEClass = eClassMap[eClassId];
-
-    for (auto it = eNodesInEClass.begin(); it != eNodesInEClass.end(); it++) {
-      if (AddOp transposeInputOp = dyn_cast<AddOp>((*it)->op)) {
-        Value TransposeValue0 =
-            rewriter
-                .create<TransposeOp>(op->getLoc(),
-                                     transposeInputOp.getOperand(0))
-                .getResult();
-        Value TransposeValue1 =
-            rewriter
-                .create<TransposeOp>(op->getLoc(),
-                                     transposeInputOp.getOperand(1))
-                .getResult();
-        return rewriter.create<AddOp>(op->getLoc(), TransposeValue0,
-                                      TransposeValue1);
-      }
+    if (AddOp transposeInputOp = eGraph.getOpInEClass<AddOp>(inputOp)) {
+      Value TransposeValue0 =
+          rewriter
+              .create<TransposeOp>(op->getLoc(), transposeInputOp.getOperand(0))
+              .getResult();
+      Value TransposeValue1 =
+          rewriter
+              .create<TransposeOp>(op->getLoc(), transposeInputOp.getOperand(1))
+              .getResult();
+      return rewriter.create<AddOp>(op->getLoc(), TransposeValue0,
+                                    TransposeValue1);
     }
     return nullptr;
   }
@@ -103,48 +79,18 @@ struct TransposeAddition : public mlir::OpEGraphRewritePattern<TransposeOp> {
 struct AdditionTranspose : public mlir::OpEGraphRewritePattern<AddOp> {
   AdditionTranspose(mlir::MLIRContext *context)
       : OpEGraphRewritePattern<AddOp>(context, /*benefit=*/1) {}
-  Operation *matchAndReturnSubst(
-      Operation *op, PatternRewriter &rewriter,
-      std::map<Operation *, ENode> &op2ENode,
-      std::map<ENode *, int64_t> &eNode2EClass,
-      std::map<int64_t, std::vector<ENode *>> &eClassMap) const override {
+  Operation *matchAndReturnSubst(Operation *op, PatternRewriter &rewriter,
+                                 EGraph &eGraph) const override {
     mlir::Value addInput0 = op->getOperand(0);
     Operation *inputOp0 = addInput0.getDefiningOp();
     mlir::Value addInput1 = op->getOperand(1);
     Operation *inputOp1 = addInput1.getDefiningOp();
 
-    auto eNode = &op2ENode.at(inputOp0);
-    if (!eNode2EClass.count(eNode)) {
+    TransposeOp addInputOp0 = eGraph.getOpInEClass<TransposeOp>(inputOp0);
+    TransposeOp addInputOp1 = eGraph.getOpInEClass<TransposeOp>(inputOp1);
+    if (!addInputOp0 || !addInputOp1) {
       return nullptr;
     }
-    int64_t eClassId = eNode2EClass[eNode];
-    std::vector<ENode *> eNodesInEClass = eClassMap[eClassId];
-    std::vector<ENode *>::iterator it;
-    for (it = eNodesInEClass.begin(); it != eNodesInEClass.end(); it++) {
-      if (TransposeOp addInputOp0 = dyn_cast<TransposeOp>((*it)->op)) {
-        break;
-      }
-    }
-    if (it == eNodesInEClass.end()) {
-      return nullptr;
-    }
-    TransposeOp addInputOp0 = dyn_cast<TransposeOp>((*it)->op);
-
-    eNode = &op2ENode.at(inputOp1);
-    if (!eNode2EClass.count(eNode)) {
-      return nullptr;
-    }
-    eClassId = eNode2EClass[eNode];
-    eNodesInEClass = eClassMap[eClassId];
-    for (it = eNodesInEClass.begin(); it != eNodesInEClass.end(); it++) {
-      if (TransposeOp addInputOp1 = dyn_cast<TransposeOp>((*it)->op)) {
-        break;
-      }
-    }
-    if (it == eNodesInEClass.end()) {
-      return nullptr;
-    }
-    TransposeOp addInputOp1 = dyn_cast<TransposeOp>((*it)->op);
 
     Value AddValue = rewriter
                          .create<AddOp>(op->getLoc(), addInputOp0.getOperand(),
