@@ -12,6 +12,7 @@
 #include "Dialect/Toy/Transforms/Passes.h"
 #include "EGraph/EGraphPatternApplicator.h"
 #include "EGraph/OpEGraphRewritePattern.h"
+#include "EGraph/Utils/OpIterator.h"
 
 #include "mlir/IR/Matchers.h"
 #include "mlir/Pass/Pass.h"
@@ -79,24 +80,13 @@ LogicalResult EGraphPatternRewriteDriver::simplify() && {
     if (traverselistMap.count(traverselist[i]))
       continue;
     Operation *rootOp = traverselist[i];
-    //    rootOp->dump();
-
-    std::queue<Operation *> queue;
-    queue.push(rootOp);
     worklist.push_back(rootOp);
     traverselistMap[rootOp] = i;
 
-    while (!queue.empty()) {
-      Operation *op = queue.front();
-      queue.pop();
-      traverselistMap[op] = i;
-      for (Value operand : op->getOperands()) {
-        if (Operation *producer = operand.getDefiningOp()) {
-          //          llvm::outs() << "  - Operand produced by operation '"
-          //                       << producer->getName() << "'\n";
-          queue.push(producer);
-        }
-      }
+    OpIterator<TraversalOrder::PreOrder> it(rootOp);
+    for (; !it.isEnd(); ++it) {
+      auto curr = *it;
+      traverselistMap[curr] = i;
     }
   }
 

@@ -7,52 +7,26 @@
 //===----------------------------------------------------------------------===//
 
 #include "EGraph/EGraph.h"
+#include "EGraph/Utils/OpIterator.h"
 
 using namespace mlir;
 
 void EGraph::buildWithOp(Operation *op) {
-  std::stack<Operation *> stack;
-  std::stack<unsigned> prevOperandIdx;
-  Operation *curr = op;
+  OpIterator<TraversalOrder::PostOrder> it(op);
+  for (; !it.isEnd(); ++it) {
+    auto curr = *it;
+    op2ENode.emplace(curr, curr);
+    ENode *eNode = &op2ENode.at(curr);
+    eNode->op = curr;
 
-  while (curr != nullptr || !stack.empty()) {
-    if (curr != nullptr) {
-      stack.push(curr);
-      prevOperandIdx.push(0);
-      curr = curr->getNumOperands() > 0 ? curr->getOperand(0).getDefiningOp()
-                                        : nullptr;
-    } else {
-      curr = stack.top();
-      unsigned currOperandIndex = prevOperandIdx.top() + 1;
-      if (currOperandIndex < curr->getNumOperands()) {
-        prevOperandIdx.pop();
-        prevOperandIdx.push(currOperandIndex);
-        curr = curr->getOperand(currOperandIndex).getDefiningOp();
-      } else {
-        //                llvm::outs() << curr->getName() << "\n";
-
-        op2ENode.emplace(curr, curr);
-        ENode *eNode = &op2ENode.at(curr);
-        eNode->op = curr;
-
-        for (Value operand : curr->getOperands()) {
-          if (Operation *producer = operand.getDefiningOp()) {
-            //                        llvm::outs() << "  - Operand produced by
-            //                        operation '"
-            //                                  << producer->getName() <<
-            //                                  "'\n";
-            auto child = &op2ENode.at(producer);
-            int64_t childEClassId = eNode2EClass[child];
-            eNode->children.push_back(childEClassId);
-          }
-        }
-        add(eNode);
-
-        stack.pop();
-        prevOperandIdx.pop();
-        curr = nullptr;
+    for (Value operand : curr->getOperands()) {
+      if (Operation *producer = operand.getDefiningOp()) {
+        auto child = &op2ENode.at(producer);
+        int64_t childEClassId = eNode2EClass[child];
+        eNode->children.push_back(childEClassId);
       }
     }
+    add(eNode);
   }
   rootEClassId = eClassMap.size() - 1;
 }
@@ -341,33 +315,13 @@ void EGraph::rebuild() {
 }
 
 void EGraph::erase(Operation *op) {
-  std::stack<Operation *> stack;
-  std::stack<unsigned> prevOperandIdx;
-  Operation *curr = op;
   std::vector<Operation *> localEraseOpList;
 
-  while (curr != nullptr || !stack.empty()) {
-    if (curr != nullptr) {
-      stack.push(curr);
-      prevOperandIdx.push(0);
-      curr = curr->getNumOperands() > 0 ? curr->getOperand(0).getDefiningOp()
-                                        : nullptr;
-    } else {
-      curr = stack.top();
-      unsigned currOperandIndex = prevOperandIdx.top() + 1;
-      if (currOperandIndex < curr->getNumOperands()) {
-        prevOperandIdx.pop();
-        prevOperandIdx.push(currOperandIndex);
-        curr = curr->getOperand(currOperandIndex).getDefiningOp();
-      } else {
-        if (!op2ENode.count(curr)) {
-          localEraseOpList.push_back(curr);
-        }
-
-        stack.pop();
-        prevOperandIdx.pop();
-        curr = nullptr;
-      }
+  OpIterator<TraversalOrder::PostOrder> it(op);
+  for (; !it.isEnd(); ++it) {
+    auto curr = *it;
+    if (!op2ENode.count(curr)) {
+      localEraseOpList.push_back(curr);
     }
   }
 
@@ -377,51 +331,26 @@ void EGraph::erase(Operation *op) {
 }
 
 int64_t EGraph::addSubst(Operation *op) {
-  std::stack<Operation *> stack;
-  std::stack<unsigned> prevOperandIdx;
-  Operation *curr = op;
   std::vector<Operation *> localEraseOpList;
 
-  while (curr != nullptr || !stack.empty()) {
-    if (curr != nullptr) {
-      stack.push(curr);
-      prevOperandIdx.push(0);
-      curr = curr->getNumOperands() > 0 ? curr->getOperand(0).getDefiningOp()
-                                        : nullptr;
-    } else {
-      curr = stack.top();
-      unsigned currOperandIndex = prevOperandIdx.top() + 1;
-      if (currOperandIndex < curr->getNumOperands()) {
-        prevOperandIdx.pop();
-        prevOperandIdx.push(currOperandIndex);
-        curr = curr->getOperand(currOperandIndex).getDefiningOp();
-      } else {
-        //                llvm::outs() << curr->getName() << "\n";
-        if (!op2ENode.count(curr)) {
-          localEraseOpList.push_back(curr);
+  OpIterator<TraversalOrder::PostOrder> it(op);
+  for (; !it.isEnd(); ++it) {
+    auto curr = *it;
+    if (!op2ENode.count(curr)) {
+      localEraseOpList.push_back(curr);
 
-          op2ENode.emplace(curr, curr);
-          ENode *eNode = &op2ENode.at(curr);
-          eNode->op = curr;
+      op2ENode.emplace(curr, curr);
+      ENode *eNode = &op2ENode.at(curr);
+      eNode->op = curr;
 
-          for (Value operand : curr->getOperands()) {
-            if (Operation *producer = operand.getDefiningOp()) {
-              //                        llvm::outs() << "  - Operand produced
-              //                        by operation '"
-              //                                  << producer->getName() <<
-              //                                  "'\n";
-              auto child = &op2ENode.at(producer);
-              int64_t childEClassId = eNode2EClass[child];
-              eNode->children.push_back(childEClassId);
-            }
-          }
-          add(eNode);
+      for (Value operand : curr->getOperands()) {
+        if (Operation *producer = operand.getDefiningOp()) {
+          auto child = &op2ENode.at(producer);
+          int64_t childEClassId = eNode2EClass[child];
+          eNode->children.push_back(childEClassId);
         }
-
-        stack.pop();
-        prevOperandIdx.pop();
-        curr = nullptr;
       }
+      add(eNode);
     }
   }
 
