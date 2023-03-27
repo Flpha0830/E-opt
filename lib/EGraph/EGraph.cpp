@@ -138,6 +138,12 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
               break;
             }
           }
+
+          // avoid reset same op
+          if (curr->op->getOperand(i).getDefiningOp() == curr->operand[i]->op) {
+            continue;
+          }
+
           if (it == eraseOpList.end()) {
             localEraseOpList.push(curr->op->getOperand(i).getDefiningOp());
           }
