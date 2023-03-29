@@ -21,9 +21,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include <iostream>
-#include <queue>
-
 using namespace mlir;
 
 namespace {
@@ -109,12 +106,15 @@ struct EGraphCanonicalizer
   }
 
   void runOnOperation() override {
-    Region *f = getOperation()->getParentRegion();
+    Operation *op = getOperation();
 
-    EGraphPatternRewriteDriver driver(f->getContext(), f, patterns);
-    LogicalResult converged = std::move(driver).simplify();
+    bool failed = false;
+    for (Region &region : op->getRegions()) {
+      EGraphPatternRewriteDriver driver(region.getContext(), &region, patterns);
+      failed |= std::move(driver).simplify().failed();
+    }
 
-    if (failed(converged))
+    if (failed)
       signalPassFailure();
   }
 
