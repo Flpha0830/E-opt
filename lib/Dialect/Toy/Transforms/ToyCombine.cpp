@@ -52,8 +52,9 @@ struct SimplifyRedundantTranspose
   }
 };
 
-struct TransposeAddition : public mlir::OpEGraphRewritePattern<TransposeOp> {
-  TransposeAddition(mlir::MLIRContext *context)
+struct TransposeOfSumToSumOfTransposes
+    : public mlir::OpEGraphRewritePattern<TransposeOp> {
+  TransposeOfSumToSumOfTransposes(mlir::MLIRContext *context)
       : OpEGraphRewritePattern<TransposeOp>(context, /*benefit=*/1) {}
   Operation *matchAndReturnSubst(Operation *op, PatternRewriter &rewriter,
                                  EGraph &eGraph) const override {
@@ -76,8 +77,9 @@ struct TransposeAddition : public mlir::OpEGraphRewritePattern<TransposeOp> {
   }
 };
 
-struct AdditionTranspose : public mlir::OpEGraphRewritePattern<AddOp> {
-  AdditionTranspose(mlir::MLIRContext *context)
+struct SumOfTransposesToTransposeOfSum
+    : public mlir::OpEGraphRewritePattern<AddOp> {
+  SumOfTransposesToTransposeOfSum(mlir::MLIRContext *context)
       : OpEGraphRewritePattern<AddOp>(context, /*benefit=*/1) {}
   Operation *matchAndReturnSubst(Operation *op, PatternRewriter &rewriter,
                                  EGraph &eGraph) const override {
@@ -104,8 +106,8 @@ struct AdditionTranspose : public mlir::OpEGraphRewritePattern<AddOp> {
 /// that they can be picked up by the Canonicalization framework.
 void TransposeOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                               MLIRContext *context) {
-  results.add<SimplifyRedundantTranspose, TransposeAddition, AdditionTranspose>(
-      context);
+  results.add<SimplifyRedundantTranspose, TransposeOfSumToSumOfTransposes,
+              SumOfTransposesToTransposeOfSum>(context);
 }
 
 /// Register our patterns as "canonicalization" patterns on the ReshapeOp so
