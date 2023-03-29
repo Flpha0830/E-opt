@@ -105,10 +105,11 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
     auto curr = *it;
     for (size_t i = 0; i < curr->operand.size(); i++) {
       auto it = eraseOpList.begin();
-      for (; it != eraseOpList.end(); it++) {
+      for (; it != eraseOpList.end();) {
         if ((*it) == curr->op->getOperand(i).getDefiningOp()) {
           break;
         }
+        it = (*it) == curr->op ? eraseOpList.erase(it) : it + 1;
       }
 
       // avoid reset same op
@@ -121,16 +122,6 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
       }
 
       curr->op->setOperand(i, curr->operand[i]->op->getResult(0));
-    }
-
-    for (auto it = eraseOpList.begin(); it != eraseOpList.end(); it++) {
-      if ((*it) == curr->op) {
-        rewriter.setInsertionPoint(ret->op);
-
-        curr->op = rewriter.create(
-            curr->op->getLoc(), curr->op->getName().getIdentifier(),
-            curr->op->getOperands(), curr->op->getResultTypes());
-      }
     }
   }
 

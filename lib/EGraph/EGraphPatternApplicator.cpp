@@ -48,6 +48,7 @@ EGraphPatternApplicator::matchAndRewrite(Operation *op,
       }
     }
   }
+  rewriter.setInsertionPoint(op);
 
   EGraph eGraph;
   eGraph.buildWithOp(op);
