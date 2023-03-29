@@ -7,12 +7,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "EGraph/EGraph.h"
+#include "EGraph/Utils/ENodeIterator.h"
 #include "EGraph/Utils/OpIterator.h"
 
 using namespace mlir;
 
 void EGraph::buildWithOp(Operation *op) {
-  OpIterator<TraversalOrder::PostOrder> it(op);
+  OpIterator<OpTraversalOrder::PostOrder> it(op);
   for (; !it.isEnd(); ++it) {
     auto curr = *it;
     op2ENode.emplace(curr, curr);
@@ -40,18 +41,9 @@ void EGraph::apply(
   std::vector<std::pair<Operation *, int64_t>> matches;
 
   auto eNode = eClassMap[rootEClassId][0];
-  std::queue<ENode *> queue;
-  std::set<ENode *> seen;
-  queue.push(eNode);
-
-  while (!queue.empty()) {
-    auto eNode = queue.front();
-    queue.pop();
-    if (seen.count(eNode)) {
-      continue;
-    }
-    seen.insert(eNode);
-
+  ENodeIterator<ENodeTraversalOrder::PreOrder> it(eNode, eClassMap);
+  for (; !it.isEnd(); ++it) {
+    auto eNode = *it;
     auto op = eNode->op;
     SmallVector<const OpEGraphRewritePattern<Operation> *, 2> opPatterns;
     auto patternIt = patterns.find(op->getName());
@@ -64,12 +56,6 @@ void EGraph::apply(
         continue;
       }
       matches.push_back(std::make_pair(subst, eNode2EClass[eNode]));
-    }
-
-    for (auto eClassId : eNode->children) {
-      for (auto eNode : eClassMap[eClassId]) {
-        queue.push(eNode);
-      }
     }
   }
 
@@ -113,57 +99,37 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
   int *depth = &tmp;
   ENode *ret = extractOp(eNode, depth, seen);
 
-  std::stack<ENode *> stack;
-  std::stack<unsigned> prevOperandIdx;
-  ENode *curr = ret;
   std::queue<Operation *> localEraseOpList;
-
-  while (curr != nullptr || !stack.empty()) {
-    if (curr != nullptr) {
-      stack.push(curr);
-      prevOperandIdx.push(0);
-      curr = curr->operand.size() > 0 ? curr->operand.at(0) : nullptr;
-    } else {
-      curr = stack.top();
-      unsigned currOperandIndex = prevOperandIdx.top() + 1;
-      if (currOperandIndex < curr->operand.size()) {
-        prevOperandIdx.pop();
-        prevOperandIdx.push(currOperandIndex);
-        curr = curr->operand.at(currOperandIndex);
-      } else {
-        for (size_t i = 0; i < curr->operand.size(); i++) {
-          auto it = eraseOpList.begin();
-          for (; it != eraseOpList.end(); it++) {
-            if ((*it) == curr->op->getOperand(i).getDefiningOp()) {
-              break;
-            }
-          }
-
-          // avoid reset same op
-          if (curr->op->getOperand(i).getDefiningOp() == curr->operand[i]->op) {
-            continue;
-          }
-
-          if (it == eraseOpList.end()) {
-            localEraseOpList.push(curr->op->getOperand(i).getDefiningOp());
-          }
-
-          curr->op->setOperand(i, curr->operand[i]->op->getResult(0));
+  ENodeIterator<ENodeTraversalOrder::PostOrder> it(ret);
+  for (; !it.isEnd(); ++it) {
+    auto curr = *it;
+    for (size_t i = 0; i < curr->operand.size(); i++) {
+      auto it = eraseOpList.begin();
+      for (; it != eraseOpList.end(); it++) {
+        if ((*it) == curr->op->getOperand(i).getDefiningOp()) {
+          break;
         }
+      }
 
-        for (auto it = eraseOpList.begin(); it != eraseOpList.end(); it++) {
-          if ((*it) == curr->op) {
-            rewriter.setInsertionPoint(ret->op);
+      // avoid reset same op
+      if (curr->op->getOperand(i).getDefiningOp() == curr->operand[i]->op) {
+        continue;
+      }
 
-            curr->op = rewriter.create(
-                curr->op->getLoc(), curr->op->getName().getIdentifier(),
-                curr->op->getOperands(), curr->op->getResultTypes());
-          }
-        }
+      if (it == eraseOpList.end()) {
+        localEraseOpList.push(curr->op->getOperand(i).getDefiningOp());
+      }
 
-        stack.pop();
-        prevOperandIdx.pop();
-        curr = nullptr;
+      curr->op->setOperand(i, curr->operand[i]->op->getResult(0));
+    }
+
+    for (auto it = eraseOpList.begin(); it != eraseOpList.end(); it++) {
+      if ((*it) == curr->op) {
+        rewriter.setInsertionPoint(ret->op);
+
+        curr->op = rewriter.create(
+            curr->op->getLoc(), curr->op->getName().getIdentifier(),
+            curr->op->getOperands(), curr->op->getResultTypes());
       }
     }
   }
@@ -323,7 +289,7 @@ void EGraph::rebuild() {
 void EGraph::erase(Operation *op) {
   std::vector<Operation *> localEraseOpList;
 
-  OpIterator<TraversalOrder::PostOrder> it(op);
+  OpIterator<OpTraversalOrder::PostOrder> it(op);
   for (; !it.isEnd(); ++it) {
     auto curr = *it;
     if (!op2ENode.count(curr)) {
@@ -339,7 +305,7 @@ void EGraph::erase(Operation *op) {
 int64_t EGraph::addSubst(Operation *op) {
   std::vector<Operation *> localEraseOpList;
 
-  OpIterator<TraversalOrder::PostOrder> it(op);
+  OpIterator<OpTraversalOrder::PostOrder> it(op);
   for (; !it.isEnd(); ++it) {
     auto curr = *it;
     if (!op2ENode.count(curr)) {

@@ -17,13 +17,13 @@
 
 using namespace mlir;
 
-enum class TraversalOrder { PreOrder, PostOrder };
+enum class OpTraversalOrder { PreOrder, PostOrder };
 
-template <TraversalOrder Order>
+template <OpTraversalOrder Order>
 class OpIterator;
 
 template <>
-class OpIterator<TraversalOrder::PostOrder> {
+class OpIterator<OpTraversalOrder::PostOrder> {
 public:
   OpIterator(Operation *op) {
     curr = op;
@@ -73,7 +73,7 @@ private:
 };
 
 template <>
-class OpIterator<TraversalOrder::PreOrder> {
+class OpIterator<OpTraversalOrder::PreOrder> {
 public:
   OpIterator(Operation *op) {
     value = op;

@@ -83,7 +83,7 @@ LogicalResult EGraphPatternRewriteDriver::simplify() && {
     worklist.push_back(rootOp);
     traverselistMap[rootOp] = i;
 
-    OpIterator<TraversalOrder::PreOrder> it(rootOp);
+    OpIterator<OpTraversalOrder::PreOrder> it(rootOp);
     for (; !it.isEnd(); ++it) {
       auto curr = *it;
       traverselistMap[curr] = i;
