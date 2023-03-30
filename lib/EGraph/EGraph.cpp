@@ -103,6 +103,7 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
   ENodeIterator<ENodeTraversalOrder::PostOrder> it(ret);
   for (; !it.isEnd(); ++it) {
     auto curr = *it;
+    Operation *latestDef = nullptr;
     for (size_t i = 0; i < curr->operand.size(); i++) {
       auto it = eraseOpList.begin();
       for (; it != eraseOpList.end();) {
@@ -110,6 +111,11 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
           break;
         }
         it = (*it) == curr->op ? eraseOpList.erase(it) : it + 1;
+      }
+
+      Operation *def = curr->operand[i]->op;
+      if (def && (!latestDef || latestDef->isBeforeInBlock(def))) {
+        latestDef = def;
       }
 
       // avoid reset same op
@@ -123,6 +129,10 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
 
       curr->op->setOperand(i, curr->operand[i]->op->getResult(0));
     }
+    // Move 'op' after the latest operand definition, if there is one.
+    if (latestDef) {
+      curr->op->moveAfter(latestDef);
+    }
   }
 
   while (!localEraseOpList.empty()) {
@@ -131,6 +141,7 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
 
     for (Value operand : op->getOperands()) {
       if (Operation *producer = operand.getDefiningOp()) {
+        // TODO: need more check
         if (producer->hasOneUse())
           localEraseOpList.push(producer);
       }
