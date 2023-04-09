@@ -10,6 +10,10 @@ set(LLVM_LINK_COMPONENTS
   OrcJIT
   )
 
+set(LLVM_TARGET_DEFINITIONS ../lib/Dialect/Toy/Transforms/ToyCombine.td)
+mlir_tablegen(ToyCombine.inc -gen-rewriters)
+add_public_tablegen_target(MLIRToyCombineIncGen)
+
 add_llvm_executable(toyc
   toyc.cpp
   ../lib/Frontend/AST.cpp
