@@ -21,6 +21,9 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
+// TODO
+#include "Dialect/Tosa/Transforms/TosaCombine.h"
+
 using namespace mlir;
 
 namespace {
@@ -102,6 +105,9 @@ struct EGraphCanonicalizer
       dialect->getCanonicalizationPatterns(owningPatterns);
     for (RegisteredOperationName op : context->getRegisteredOperations())
       op.getCanonicalizationPatterns(owningPatterns, context);
+
+    // TODO: need a workaround for adding patterns of dialects in MLIR
+    owningPatterns.add<SimplifyRedundantTranspose>(context);
 
     patterns = FrozenRewritePatternSet(std::move(owningPatterns));
     return success();
