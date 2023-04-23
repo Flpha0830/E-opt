@@ -94,6 +94,8 @@ struct EGraphCanonicalizer
     : public mlir::PassWrapper<EGraphCanonicalizer, OperationPass<>> {
   MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(EGraphCanonicalizer)
 
+  StringRef getArgument() const final { return "e-graph"; }
+
   LogicalResult initialize(MLIRContext *context) override {
     RewritePatternSet owningPatterns(context);
     for (auto *dialect : context->getLoadedDialects())
