@@ -142,10 +142,30 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
     for (Value operand : op->getOperands()) {
       if (Operation *producer = operand.getDefiningOp()) {
         // TODO: need more check
-        if (producer->hasOneUse())
+        auto user = producer->getUsers().begin();
+        for (; user != producer->getUsers().end(); user++) {
+          if (*user == op) {
+            continue;
+          }
+
+          auto it = eraseOpList.begin();
+          for (; it != eraseOpList.end(); it++) {
+            if ((*user) == (*it)) {
+              break;
+            }
+          }
+          if (it != eraseOpList.end()) {
+            continue;
+          }
+          break;
+        }
+
+        if (user == producer->getUsers().end()) {
           localEraseOpList.push(producer);
+        }
       }
     }
+    op->dropAllUses();
     op->erase();
   }
 }
