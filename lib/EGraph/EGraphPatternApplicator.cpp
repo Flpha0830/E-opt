@@ -17,8 +17,9 @@
 using namespace mlir;
 
 EGraphPatternApplicator::EGraphPatternApplicator(
-    const FrozenRewritePatternSet &frozenPatternList)
-    : frozenPatternList(frozenPatternList) {}
+    const FrozenRewritePatternSet &frozenPatternList,
+    const std::map<StringRef, int64_t> &opCostMap)
+    : frozenPatternList(frozenPatternList), opCostMap(opCostMap) {}
 EGraphPatternApplicator::~EGraphPatternApplicator() = default;
 
 #ifndef NDEBUG
@@ -62,6 +63,6 @@ EGraphPatternApplicator::matchAndRewrite(Operation *op,
   } while (eGraph.getNumENode() != prevNumENode ||
            eGraph.getNumEClass() != prevNumEClass);
 
-  eGraph.rewriteWithBest(rewriter);
+  eGraph.rewriteWithBest(rewriter, opCostMap);
   return success();
 }

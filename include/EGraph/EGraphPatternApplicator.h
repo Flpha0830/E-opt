@@ -19,7 +19,8 @@ class PatternRewriter;
 class EGraphPatternApplicator {
 public:
   explicit EGraphPatternApplicator(
-      const FrozenRewritePatternSet &frozenPatternList);
+      const FrozenRewritePatternSet &frozenPatternList,
+      const std::map<StringRef, int64_t> &opCostMap);
   ~EGraphPatternApplicator();
 
   LogicalResult matchAndRewrite(Operation *op, PatternRewriter &rewriter,
@@ -35,6 +36,7 @@ private:
   DenseMap<OperationName,
            SmallVector<const OpEGraphRewritePattern<Operation> *, 2>>
       patterns;
+  const std::map<StringRef, int64_t> &opCostMap;
 };
 } // namespace mlir
 

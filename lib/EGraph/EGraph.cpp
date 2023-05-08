@@ -90,14 +90,15 @@ void EGraph::apply(
   rebuild();
 }
 
-void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
+void EGraph::rewriteWithBest(PatternRewriter &rewriter,
+                             const std::map<StringRef, int64_t> &opCostMap) {
   auto eNode = eClassMap[rootEClassId][0];
   std::set<ENode *> seen;
   seen.insert(eNode);
 
   int tmp = 0;
-  int *depth = &tmp;
-  ENode *ret = extractOp(eNode, depth, seen);
+  int *cost = &tmp;
+  ENode *ret = extractOp(eNode, cost, seen, opCostMap);
 
   std::queue<Operation *> localEraseOpList;
   ENodeIterator<ENodeTraversalOrder::PostOrder> it(ret);
@@ -170,13 +171,15 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter) {
   }
 }
 
-ENode *EGraph::extractOp(ENode *eNode, int *depth, std::set<ENode *> &seen) {
+ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
+                         const std::map<StringRef, int64_t> &opCostMap) {
   if (eNode->children.size() == 0) {
-    *depth = 1;
+    auto opName = eNode->op->getName().getStringRef();
+    *cost = opCostMap.count(opName) ? opCostMap.at(opName) : 1;
     return eNode;
   }
 
-  *depth = INT_MIN;
+  *cost = INT_MIN;
   for (size_t i = 0; i < eNode->children.size(); i++) {
     auto eClassId = eNode->children[i];
 
@@ -190,7 +193,7 @@ ENode *EGraph::extractOp(ENode *eNode, int *depth, std::set<ENode *> &seen) {
 
       int tmp = 0;
       int *val = &tmp;
-      ENode *childOp = extractOp(eNode, val, seen);
+      ENode *childOp = extractOp(eNode, val, seen, opCostMap);
       seen.erase(eNode);
       if (*val < minVal && childOp) {
         minVal = *val;
@@ -199,17 +202,19 @@ ENode *EGraph::extractOp(ENode *eNode, int *depth, std::set<ENode *> &seen) {
     }
 
     if (minVal == INT_MAX || !minChildENode) {
-      *depth = INT_MAX;
+      *cost = INT_MAX;
       return nullptr;
     }
 
-    *depth = std::max(*depth, minVal);
+    *cost = std::max(*cost, minVal);
     if (eNode->operand.size() <= i) {
       eNode->operand.push_back(minChildENode);
     }
   }
 
-  *depth = *depth + 1;
+  auto opName = eNode->op->getName().getStringRef();
+  int64_t subCost = opCostMap.count(opName) ? opCostMap.at(opName) : 1;
+  *cost = *cost + subCost;
   return eNode;
 }
 

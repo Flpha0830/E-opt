@@ -38,3 +38,7 @@ struct SimplifyRedundantTranspose
     return nullptr;
   }
 };
+
+void getOpCostMap(std::map<StringRef, int64_t> &map) {
+  map.emplace("tosa.const", 1);
+}

@@ -63,7 +63,8 @@ public:
                       SmallVector<const OpEGraphRewritePattern<Operation> *, 2>>
                  &patterns,
              PatternRewriter &rewriter, RewriterBase::Listener &listener);
-  void rewriteWithBest(PatternRewriter &rewriter);
+  void rewriteWithBest(PatternRewriter &rewriter,
+                       const std::map<StringRef, int64_t> &opCostMap);
   void dump();
 
   size_t getNumENode() { return eNode2EClass.size(); }
@@ -98,7 +99,8 @@ private:
   UnionFind unionFind;
 
   void rebuild();
-  ENode *extractOp(ENode *eNode, int *depth, std::set<ENode *> &seen);
+  ENode *extractOp(ENode *eNode, int *depth, std::set<ENode *> &seen,
+                   const std::map<StringRef, int64_t> &opCostMap);
   void erase(Operation *op);
   int64_t addSubst(Operation *op);
 

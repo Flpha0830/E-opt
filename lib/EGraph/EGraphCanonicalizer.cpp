@@ -30,8 +30,9 @@ namespace {
 class EGraphPatternRewriteDriver : public PatternRewriter,
                                    public RewriterBase::Listener {
 public:
-  explicit EGraphPatternRewriteDriver(MLIRContext *ctx, Region *f,
-                                      const FrozenRewritePatternSet &patterns);
+  explicit EGraphPatternRewriteDriver(
+      MLIRContext *ctx, Region *f, const FrozenRewritePatternSet &patterns,
+      const std::map<StringRef, int64_t> &opCostMap);
   LogicalResult simplify() &&;
 
 protected:
@@ -52,8 +53,9 @@ private:
 };
 
 EGraphPatternRewriteDriver::EGraphPatternRewriteDriver(
-    MLIRContext *ctx, Region *f, const FrozenRewritePatternSet &patterns)
-    : PatternRewriter(ctx), matcher(patterns), f(f) {}
+    MLIRContext *ctx, Region *f, const FrozenRewritePatternSet &patterns,
+    const std::map<StringRef, int64_t> &opCostMap)
+    : PatternRewriter(ctx), matcher(patterns, opCostMap), f(f) {}
 
 bool EGraphPatternRewriteDriver::processWorklist() {
   bool changed = false;
@@ -108,6 +110,7 @@ struct EGraphCanonicalizer
 
     // TODO: need a workaround for adding patterns of dialects in MLIR
     owningPatterns.add<SimplifyRedundantTranspose>(context);
+    getOpCostMap(opCostMap);
 
     patterns = FrozenRewritePatternSet(std::move(owningPatterns));
     return success();
@@ -118,7 +121,8 @@ struct EGraphCanonicalizer
 
     bool failed = false;
     for (Region &region : op->getRegions()) {
-      EGraphPatternRewriteDriver driver(region.getContext(), &region, patterns);
+      EGraphPatternRewriteDriver driver(region.getContext(), &region, patterns,
+                                        opCostMap);
       failed |= std::move(driver).simplify().failed();
     }
 
@@ -127,6 +131,7 @@ struct EGraphCanonicalizer
   }
 
   FrozenRewritePatternSet patterns;
+  std::map<StringRef, int64_t> opCostMap;
 };
 } // namespace
 
