@@ -54,6 +54,7 @@ public:
   explicit EGraph() {}
   ~EGraph() {
     for (auto it = eraseOpList.begin(); it != eraseOpList.end(); it++) {
+      (*it)->dropAllUses();
       (*it)->erase();
     }
   }
