@@ -1,4 +1,4 @@
-// RUN: toyc-ch6 %s -emit=mlir -opt 2>&1 | FileCheck %s
+// RUN: toyc %s -emit=mlir -opt 2>&1 | FileCheck %s
 
 // Check the result of inlining+shape inference on an input module.
 

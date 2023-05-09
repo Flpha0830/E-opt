@@ -41,6 +41,6 @@ add_definitions(${LLVM_DEFINITIONS})
 
 add_subdirectory(include)
 add_subdirectory(lib)
-#add_subdirectory(test)
+add_subdirectory(test)
 add_subdirectory(toyc)
 add_subdirectory(e-opt)

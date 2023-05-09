@@ -85,6 +85,8 @@ static cl::opt<enum Action> emitAction(
                    "JIT the code and run it by invoking the main function")));
 
 static cl::opt<bool> enableOpt("opt", cl::desc("Enable optimizations"));
+static cl::opt<bool> enableEOpt("e-opt",
+                                cl::desc("Enable e-graph-based optimizations"));
 
 /// Returns a Toy AST resulting from parsing the file or a nullptr on error.
 std::unique_ptr<toy::ModuleAST> parseInputFile(llvm::StringRef filename) {
@@ -151,9 +153,13 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
     // Now that there is only one function, we can infer the shapes of each of
     // the operations.
     mlir::OpPassManager &optPM = pm.nest<mlir::toy::FuncOp>();
-    optPM.addPass(mlir::toy::createShapeInferencePass());
-    //    optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::createEGraphCanonicalizerPass());
+    if (enableEOpt) {
+      optPM.addPass(mlir::createEGraphCanonicalizerPass());
+      optPM.addPass(mlir::toy::createShapeInferencePass());
+    } else {
+      optPM.addPass(mlir::toy::createShapeInferencePass());
+      optPM.addPass(mlir::createCanonicalizerPass());
+    }
     optPM.addPass(mlir::createCSEPass());
   }
 
