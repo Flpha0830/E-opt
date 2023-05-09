@@ -10,7 +10,7 @@ cmake -G "Unix Makefiles" `$LLVM_SRC_DIR/llvm` \
     -DLLVM_ENABLE_PROJECTS=mlir \
     -DCMAKE_BUILD_TYPE=Release \
     -DLLVM_EXTERNAL_PROJECTS=toy-dialect -DLLVM_EXTERNAL_TOY_DIALECT_SOURCE_DIR=../
-cmake -- build .
+cmake --build .
 ```
 Here, `$LLVM_SRC_DIR` needs to point to the root of the monorepo.
 
