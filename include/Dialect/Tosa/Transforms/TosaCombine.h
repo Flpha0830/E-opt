@@ -347,5 +347,6 @@ void getOpEGraphRewritePatterns(RewritePatternSet &results,
 }
 
 void getOpCostMap(std::map<StringRef, int64_t> &map) {
-  map.emplace("tosa.const", 1);
+  map.emplace("tosa.const", 0);
+  map.emplace("func.return", 0);
 }

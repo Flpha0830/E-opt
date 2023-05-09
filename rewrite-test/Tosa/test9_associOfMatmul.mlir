@@ -1,5 +1,5 @@
 module {
-  func.func @test_associativity_of_add() -> tensor<3x3x3xf32> {
+  func.func @test_associativity_of_matmul() -> tensor<3x3x3xf32> {
     // Create a constant 3x3x3 input tensor filled with ones
     %input1 = "tosa.const"() {value = dense<1.0> : tensor<3x3x3xf32>} : () -> tensor<3x3x3xf32>
     // Create a constant 3x3x3 input tensor filled with ones

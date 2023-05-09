@@ -105,7 +105,7 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter,
   int tmp = 0;
   int *cost = &tmp;
   ENode *ret = extractOp(eNode, cost, seen, opCostMap);
-  // llvm::dbgs() << *(eNode->op) <<" cost: " << *cost << "\n";
+  llvm::dbgs() << *(eNode->op) <<" cost: " << *cost << "\n";
   std::queue<Operation *> localEraseOpList;
   ENodeIterator<ENodeTraversalOrder::PostOrder> it(ret);
   for (; !it.isEnd(); ++it) {
@@ -186,7 +186,7 @@ ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
     return eNode;
   }
 
-  *cost = INT_MIN;
+  *cost = 0;
   for (size_t i = 0; i < eNode->children.size(); i++) {
     auto eClassId = eNode->children[i];
 
@@ -194,6 +194,8 @@ ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
     int minVal = INT_MAX;
     for (auto eNode : eClassMap[eClassId]) {
       if (seen.count(eNode)) {
+        minVal = 0;
+        minChildENode = eNode;
         continue;
       }
       seen.insert(eNode);
@@ -213,7 +215,7 @@ ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
       return nullptr;
     }
 
-    *cost = std::max(*cost, minVal);
+    *cost += minVal;
     if (eNode->operand.size() <= i) {
       eNode->operand.push_back(minChildENode);
     }
