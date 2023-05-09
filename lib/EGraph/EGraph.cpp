@@ -7,8 +7,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "EGraph/EGraph.h"
+#include "EGraph/OpEGraphRewritePattern.h"
 #include "EGraph/Utils/ENodeIterator.h"
 #include "EGraph/Utils/OpIterator.h"
+
+#include "mlir/Dialect/Tosa/IR/TosaOps.h"
+#include "mlir/IR/Dialect.h"
+#include "mlir/IR/PatternMatch.h"
+#include "llvm/Support/Debug.h"
 
 using namespace mlir;
 
@@ -99,7 +105,7 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter,
   int tmp = 0;
   int *cost = &tmp;
   ENode *ret = extractOp(eNode, cost, seen, opCostMap);
-
+  // llvm::dbgs() << *(eNode->op) <<" cost: " << *cost << "\n";
   std::queue<Operation *> localEraseOpList;
   ENodeIterator<ENodeTraversalOrder::PostOrder> it(ret);
   for (; !it.isEnd(); ++it) {
@@ -173,6 +179,7 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter,
 
 ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
                          const std::map<StringRef, int64_t> &opCostMap) {
+
   if (eNode->children.size() == 0) {
     auto opName = eNode->op->getName().getStringRef();
     *cost = opCostMap.count(opName) ? opCostMap.at(opName) : 1;
@@ -214,7 +221,33 @@ ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
 
   auto opName = eNode->op->getName().getStringRef();
   int64_t subCost = opCostMap.count(opName) ? opCostMap.at(opName) : 1;
+
+  if(auto matmulop = dyn_cast<tosa::MatMulOp>(eNode->op)){
+    auto t1 = matmulop->getOperand(0).getType().cast<mlir::TensorType>();
+    auto t2 = matmulop->getOperand(1).getType().cast<mlir::TensorType>();
+    auto n = t1.getShape()[0];
+    auto h = t1.getShape()[1];
+    auto c = t1.getShape()[2];
+    auto w = t2.getShape()[2];
+    subCost = n * h * c * w * 3;
+  } else if(auto addop = dyn_cast<tosa::AddOp>(eNode->op)){
+    auto t2 = addop->getOperand(1).getType().cast<mlir::TensorType>();
+    auto n = t2.getShape()[0];
+    auto h = t2.getShape()[1];
+    auto w = t2.getShape()[2];
+    subCost = n * h * w;
+  } else if(auto mulop = dyn_cast<tosa::MulOp>(eNode->op)){
+    auto t2 = mulop->getOperand(1).getType().cast<mlir::TensorType>();
+    auto n = t2.getShape()[0];
+    auto h = t2.getShape()[1];
+    auto w = t2.getShape()[2];
+    subCost = n * h * w * 2;
+  } 
+  
   *cost = *cost + subCost;
+
+  // llvm::dbgs() << *(eNode->op) <<" qwqcost: " << *cost << "\n";
+
   return eNode;
 }
 
