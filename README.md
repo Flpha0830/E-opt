@@ -16,7 +16,7 @@ Here, `$LLVM_SRC_DIR` needs to point to the root of the monorepo.
 
 ## Testing
 ```sh
-./build/bin/e-opt --e-graph genTest/randomTest3.mlir
+./build/bin/e-opt --e-graph rewrite-test/Tosa/randomTest1.mlir
 ```
 
 ## Random Test Generate
