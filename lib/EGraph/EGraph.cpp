@@ -182,7 +182,7 @@ ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
 
   if (eNode->children.size() == 0) {
     auto opName = eNode->op->getName().getStringRef();
-    *cost = opCostMap.count(opName) ? opCostMap.at(opName) : 1;
+    *cost = opCostMap.count(opName) ? opCostMap.at(opName) : 0;
     return eNode;
   }
 
@@ -214,7 +214,7 @@ ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
       *cost = INT_MAX;
       return nullptr;
     }
-
+    llvm::dbgs() << *(minChildENode->op) <<" cost: " << minVal << "\n";
     *cost += minVal;
     if (eNode->operand.size() <= i) {
       eNode->operand.push_back(minChildENode);
