@@ -19,6 +19,7 @@
 using namespace mlir;
 
 void EGraph::buildWithOp(Operation *op) {
+  static std::set<ENode *> visited;
   OpIterator<OpTraversalOrder::PostOrder> it(op);
   for (; !it.isEnd(); ++it) {
     auto curr = *it;
@@ -30,10 +31,16 @@ void EGraph::buildWithOp(Operation *op) {
       if (Operation *producer = operand.getDefiningOp()) {
         auto child = &op2ENode.at(producer);
         int64_t childEClassId = eNode2EClass[child];
+        if (visited.count(eNode)) {
+          continue;
+        }
         eNode->children.push_back(childEClassId);
       }
     }
     add(eNode);
+    visited.insert(eNode);
+    (eNode->op)->dump();
+    llvm::dbgs() << "num children: " << eNode->children.size() << "\n";
   }
   rootEClassId = eClassMap.size() - 1;
 }
@@ -105,7 +112,7 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter,
   int tmp = 0;
   int *cost = &tmp;
   ENode *ret = extractOp(eNode, cost, seen, opCostMap);
-  llvm::dbgs() << *(eNode->op) <<" cost: " << *cost << "\n";
+  llvm::dbgs() << *(eNode->op) << " cost: " << *cost << "\n";
   std::queue<Operation *> localEraseOpList;
   ENodeIterator<ENodeTraversalOrder::PostOrder> it(ret);
   for (; !it.isEnd(); ++it) {
@@ -179,14 +186,17 @@ void EGraph::rewriteWithBest(PatternRewriter &rewriter,
 
 ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
                          const std::map<StringRef, int64_t> &opCostMap) {
-
+  static std::map<ENode *, int> ENodeCostMap;
   if (eNode->children.size() == 0) {
     auto opName = eNode->op->getName().getStringRef();
     *cost = opCostMap.count(opName) ? opCostMap.at(opName) : 0;
     return eNode;
   }
 
-  *cost = 0;
+  // *cost = 0;
+  llvm::dbgs() << "Current Node:" << *(eNode->op)
+               << " with number of children:" << (eNode->children).size()
+               << "\n";
   for (size_t i = 0; i < eNode->children.size(); i++) {
     auto eClassId = eNode->children[i];
 
@@ -214,9 +224,18 @@ ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
       *cost = INT_MAX;
       return nullptr;
     }
-    llvm::dbgs() << *(minChildENode->op) <<" cost: " << minVal << "\n";
-    *cost += minVal;
+    if (ENodeCostMap.count(minChildENode)) {
+      minVal = 0;
+    } else {
+      ENodeCostMap[minChildENode] = minVal;
+      *cost += minVal;
+    }
+
+    llvm::dbgs() << *(minChildENode->op) << " cost: " << minVal << "\n";
+
     if (eNode->operand.size() <= i) {
+      llvm::dbgs() << "Choose operand:" << *(minChildENode->op)
+                   << "with cost: " << minVal << "\n";
       eNode->operand.push_back(minChildENode);
     }
   }
@@ -224,7 +243,7 @@ ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
   auto opName = eNode->op->getName().getStringRef();
   int64_t subCost = opCostMap.count(opName) ? opCostMap.at(opName) : 1;
 
-  if(auto matmulop = dyn_cast<tosa::MatMulOp>(eNode->op)){
+  if (auto matmulop = dyn_cast<tosa::MatMulOp>(eNode->op)) {
     auto t1 = matmulop->getOperand(0).getType().cast<mlir::TensorType>();
     auto t2 = matmulop->getOperand(1).getType().cast<mlir::TensorType>();
     auto n = t1.getShape()[0];
@@ -232,23 +251,27 @@ ENode *EGraph::extractOp(ENode *eNode, int *cost, std::set<ENode *> &seen,
     auto c = t1.getShape()[2];
     auto w = t2.getShape()[2];
     subCost = n * h * c * w * 3;
-  } else if(auto addop = dyn_cast<tosa::AddOp>(eNode->op)){
+  } else if (auto addop = dyn_cast<tosa::AddOp>(eNode->op)) {
     auto t2 = addop->getOperand(1).getType().cast<mlir::TensorType>();
     auto n = t2.getShape()[0];
     auto h = t2.getShape()[1];
     auto w = t2.getShape()[2];
     subCost = n * h * w;
-  } else if(auto mulop = dyn_cast<tosa::MulOp>(eNode->op)){
+  } else if (auto mulop = dyn_cast<tosa::MulOp>(eNode->op)) {
     auto t2 = mulop->getOperand(1).getType().cast<mlir::TensorType>();
     auto n = t2.getShape()[0];
     auto h = t2.getShape()[1];
     auto w = t2.getShape()[2];
     subCost = n * h * w * 2;
-  } 
-  
-  *cost = *cost + subCost;
+  }
+  // *cost = 0;
+  // for(auto [k,v] : ENodeCostMap){
+  //   *cost += v;
+  // }
+  *cost += subCost;
 
-  // llvm::dbgs() << *(eNode->op) <<" qwqcost: " << *cost << "\n";
+  llvm::dbgs() << "End current node:" << *(eNode->op) << "with cost: " << *cost
+               << "\n and nops:" << eNode->operand.size() << "\n";
 
   return eNode;
 }

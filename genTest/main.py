@@ -92,7 +92,7 @@ if __name__ == '__main__':
     W_list = [4, 8, 16, 32, 64, 128, 256]
     ops = ["Add", "Mul", "MatMul"]
     with open('data.txt','w') as data:
-        for j in range(10):
+        for j in range(5):
             print("Generate test" + str(j))
             inputs = set()
 
@@ -102,16 +102,25 @@ if __name__ == '__main__':
                 C = C_list[random.randint(0, len(C_list) - 1)]
                 inputs.add(op("input" + str(i), "Const",[N,H,C], []))
             i = 0
-            while i < 20:
+            while i < 10:
+                if len(inputs) == 0:
+                    break
                 l = random.choice(list(inputs))
+                inputs.remove(l)
+                if len(inputs) == 0:
+                    inputs.add(l)
+                    break
+                    
                 r = random.choice(list(inputs))
+                inputs.remove(r)
                 op_type = ops[random.randint(0, len(ops) - 1)]
                 if get_result_size(op_type,l.size,r.size):
                     size = get_result_size(op_type,l.size,r.size)
                     inputs.add(op(op_type + str(i), op_type, size, [l,r]))
                     i += 1
-            # for i in range(10):
-            #     print(inputs[i].name, inputs[i].type, inputs[i].output.name)
+                inputs.add(l)
+                inputs.add(r)
+                
 
             largest_op = None
             largest_depth = 0

@@ -1,11 +1,13 @@
 module {
-	func.func @test_random_0() ->tensor<2x16x64xf32> {
-		%input9 =  "tosa.const"() {value = dense<2.0>: tensor<2x16x64xf32>} : () -> tensor<2x16x64xf32>
-		%input7 =  "tosa.const"() {value = dense<1.0>: tensor<2x16x64xf32>} : () -> tensor<2x16x64xf32>
-		%Add0 =  "tosa.add"(%input7, %input9) : (tensor<2x16x64xf32>, tensor<2x16x64xf32>) -> tensor<2x16x64xf32>
-		%Mul3 =  "tosa.mul"(%input9, %Add0) {shift = 0 : i32} : (tensor<2x16x64xf32>, tensor<2x16x64xf32>) -> tensor<2x16x64xf32>
-		%Add9 =  "tosa.add"(%Mul3, %input7) : (tensor<2x16x64xf32>, tensor<2x16x64xf32>) -> tensor<2x16x64xf32>
-		%Mul10 =  "tosa.mul"(%Mul3, %Add9) {shift = 0 : i32} : (tensor<2x16x64xf32>, tensor<2x16x64xf32>) -> tensor<2x16x64xf32>
-		return %Mul10 : tensor<2x16x64xf32>
+	func.func @test_random_0() ->tensor<4x256x64xf32> {
+		%input3 =  "tosa.const"() {value = dense<4.0>: tensor<4x256x64xf32>} : () -> tensor<4x256x64xf32>
+		%input5 =  "tosa.const"() {value = dense<8.0>: tensor<4x256x64xf32>} : () -> tensor<4x256x64xf32>
+		%Add2 =  "tosa.add"(%input3, %input5) : (tensor<4x256x64xf32>, tensor<4x256x64xf32>) -> tensor<4x256x64xf32>
+		%Mul3 =  "tosa.mul"(%input3, %Add2) {shift = 0 : i32} : (tensor<4x256x64xf32>, tensor<4x256x64xf32>) -> tensor<4x256x64xf32>
+		%Mul7 =  "tosa.mul"(%Mul3, %input3) {shift = 0 : i32} : (tensor<4x256x64xf32>, tensor<4x256x64xf32>) -> tensor<4x256x64xf32>
+		%Add10 =  "tosa.add"(%Mul3, %Mul7) : (tensor<4x256x64xf32>, tensor<4x256x64xf32>) -> tensor<4x256x64xf32>
+		%Add12 =  "tosa.add"(%Add10, %input3) : (tensor<4x256x64xf32>, tensor<4x256x64xf32>) -> tensor<4x256x64xf32>
+		%Add13 =  "tosa.add"(%Add12, %Mul7) : (tensor<4x256x64xf32>, tensor<4x256x64xf32>) -> tensor<4x256x64xf32>
+		return %Add13 : tensor<4x256x64xf32>
 	}
 }
