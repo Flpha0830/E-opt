@@ -1,12 +1,13 @@
 module {
-	func.func @test_random_5() ->tensor<1x4x128xf32> {
-		%input7 =  "tosa.const"() {value = dense<1.0>: tensor<1x4x128xf32>} : () -> tensor<1x4x128xf32>
-		%input1 =  "tosa.const"() {value = dense<0.0>: tensor<1x128x128xf32>} : () -> tensor<1x128x128xf32>
-		%MatMul5 =  "tosa.matmul"(%input7, %input1) : (tensor<1x4x128xf32>, tensor<1x128x128xf32>) -> tensor<1x4x128xf32>
-		%Mul1 =  "tosa.mul"(%input7, %input7) {shift = 0 : i32} : (tensor<1x4x128xf32>, tensor<1x4x128xf32>) -> tensor<1x4x128xf32>
-		%Mul11 =  "tosa.mul"(%Mul1, %Mul1) {shift = 0 : i32} : (tensor<1x4x128xf32>, tensor<1x4x128xf32>) -> tensor<1x4x128xf32>
-		%Mul13 =  "tosa.mul"(%MatMul5, %Mul11) {shift = 0 : i32} : (tensor<1x4x128xf32>, tensor<1x4x128xf32>) -> tensor<1x4x128xf32>
-		%Mul14 =  "tosa.mul"(%Mul13, %MatMul5) {shift = 0 : i32} : (tensor<1x4x128xf32>, tensor<1x4x128xf32>) -> tensor<1x4x128xf32>
-		return %Mul14 : tensor<1x4x128xf32>
+	func.func @test_random_5() ->tensor<2x64x32xf32> {
+		%input1 =  "tosa.const"() {value = dense<10.0>: tensor<2x64x8xf32>} : () -> tensor<2x64x8xf32>
+		%Add0 =  "tosa.add"(%input1, %input1) : (tensor<2x64x8xf32>, tensor<2x64x8xf32>) -> tensor<2x64x8xf32>
+		%Mul2 =  "tosa.mul"(%Add0, %input1) {shift = 0 : i32} : (tensor<2x64x8xf32>, tensor<2x64x8xf32>) -> tensor<2x64x8xf32>
+		%Add3 =  "tosa.add"(%Add0, %Mul2) : (tensor<2x64x8xf32>, tensor<2x64x8xf32>) -> tensor<2x64x8xf32>
+		%input9 =  "tosa.const"() {value = dense<2.0>: tensor<2x8x64xf32>} : () -> tensor<2x8x64xf32>
+		%input3 =  "tosa.const"() {value = dense<6.0>: tensor<2x64x32xf32>} : () -> tensor<2x64x32xf32>
+		%MatMul7 =  "tosa.matmul"(%input9, %input3) : (tensor<2x8x64xf32>, tensor<2x64x32xf32>) -> tensor<2x8x32xf32>
+		%MatMul8 =  "tosa.matmul"(%Add3, %MatMul7) : (tensor<2x64x8xf32>, tensor<2x8x32xf32>) -> tensor<2x64x32xf32>
+		return %MatMul8 : tensor<2x64x32xf32>
 	}
 }
